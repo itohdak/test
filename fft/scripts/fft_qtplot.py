@@ -48,7 +48,7 @@ class FFTPlotNode():
         self.timer.start(self.UPDATE_SECOND)
 
     def subscribe(self):
-        self.sub_spectrum = rospy.Subscriber('/fft/output', SpectrumData, self._cb, queue_size=1000, buff_size=2**24)
+        self.sub_spectrum = rospy.Subscriber('~spectrum', SpectrumData, self._cb, queue_size=1000, buff_size=2**24)
     def _cb(self, msg):
         self.freq = np.array(msg.frequency)
         self.Amp = np.array(msg.spectrum)
