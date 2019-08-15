@@ -13,6 +13,7 @@ from pyqtgraph.Qt import QtGui,QtCore
 class FFTPlotNode():
 
     def __init__(self):
+        self.yrange = float(rospy.get_param('~yrange', 2e+5))
         self.UPDATE_SECOND = 10
         self.freq = []
         self.Amp = []
@@ -35,11 +36,24 @@ class FFTPlotNode():
         self.plotitem1 = self.plotwid1.getPlotItem()
         self.plotitem1.setMouseEnabled(x=False,y=False)
         self.plotitem1.setXRange(0,4000,padding=0)
-        self.plotitem1.setYRange(0,2e+5)
+        self.plotitem1.setYRange(0,self.yrange)
         self.specAxis1 = self.plotitem1.getAxis("bottom")
         self.specAxis1.setLabel("Frequency[Hz]")
         self.curve1 = self.plotitem1.plot()
         self.lay.addWidget(self.plotwid1)
+
+
+        self.plotwid2 = pg.PlotWidget(name="cepstrum")
+        self.plotitem2 = self.plotwid2.getPlotItem()
+        self.plotitem2.setMouseEnabled(x=False,y=False)
+        self.plotitem2.setXRange(0,0.25,padding=0)
+        self.plotitem2.setYRange(-5,5)
+        self.specAxis2 = self.plotitem2.getAxis("bottom")
+        self.specAxis2.setLabel("Quefrency[s]")
+        self.curve2 = self.plotitem2.plot()
+        self.lay.addWidget(self.plotwid2)
+
+
         # Show plot window
         self.win.show()
         # Update timer setting
@@ -49,11 +63,16 @@ class FFTPlotNode():
 
     def subscribe(self):
         self.sub_spectrum = rospy.Subscriber('~spectrum', SpectrumData, self._cb, queue_size=1000, buff_size=2**24)
+        self.sub_cepstrum = rospy.Subscriber('~cepstrum', SpectrumData, self._cb_ceps, queue_size=1000, buff_size=2**24)
     def _cb(self, msg):
         self.freq = np.array(msg.frequency)
         self.Amp = np.array(msg.spectrum)
+    def _cb_ceps(self, msg):
+        self.t = np.array(msg.tm)
+        self.ceps = np.array(msg.spectrum)
     def update(self):
         self.curve1.setData(self.freq,self.Amp)
+        self.curve2.setData(self.t,self.ceps)
 
 if __name__=='__main__':
     rospy.init_node('fft_plot_node')
