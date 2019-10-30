@@ -1,9 +1,16 @@
 <launch>
+  <arg name="qtplot" default="true" />
+  <arg name="input" default="/fft/output" />
+  <arg name="input_cepstrum" default="/fft/output/cepstrum" />
+  <arg name="yrange" default="2e+5" />
+
   <node name="fft_qtplot"
         pkg="fft" type="fft_qtplot.py"
         if="$(arg qtplot)">
-    <remap from="~spectrum" to="/fft/output" />
-    <rosparam>
+    <remap from="~spectrum" to="$(arg input)" />
+    <remap from="~cepstrum" to="$(arg input_cepstrum)" />
+    <rosparam subst_value="true">
+      yrange: $(arg yrange)
     </rosparam>
   </node>
 </launch>

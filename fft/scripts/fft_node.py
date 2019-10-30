@@ -27,7 +27,9 @@ class AudioToSpeechAudioNode():
 
         self.freq = np.linspace(0, self.sampling_rate, self.audio_prefetch_sparse_bytes)
         self.t = np.arange(0, self.audio_prefetch, 1.0/self.sampling_rate)
-        self.window_function = 0.54 - 0.46 * np.cos(2 * np.pi * np.arange(0.0, 1.0, 1.0 / (self.audio_prefetch * self.sampling_rate)))
+        # self.window_function = 0.54 - 0.46 * np.cos(2 * np.pi * np.arange(0.0, 1.0, 1.0 / (self.audio_prefetch * self.sampling_rate)))
+        # hanning window
+        self.window_function = np.hanning(self.audio_prefetch * self.sampling_rate)
 
         self.plot_graph = rospy.get_param("~plot", False)
         if self.plot_graph:
@@ -52,6 +54,8 @@ class AudioToSpeechAudioNode():
         rospy.Rate(100)
         # advertise
         self.pub = rospy.Publisher('~output', SpectrumData, queue_size=2**24)
+        self.pub_log_amp = rospy.Publisher('~output/log', SpectrumData, queue_size=2**24)
+        self.pub_ceps = rospy.Publisher('~output/cepstrum', SpectrumData, queue_size=2**24)
         self.subscribe()
 
     def subscribe(self):
@@ -80,6 +84,8 @@ class AudioToSpeechAudioNode():
 
         # amplitude spectrum
         self.Amp = np.abs(self.F)
+        self.log_Amp = 20 * np.log10(self.Amp)
+        self.cepstrum = np.real(np.fft.ifft(self.log_Amp))
 
         # plot graph
         if self.plot_graph:
@@ -106,7 +112,17 @@ class AudioToSpeechAudioNode():
                            audio=self.f,
                            frequency=self.freq,
                            spectrum=self.Amp)
+        msg_log = SpectrumData(tm=self.t,
+                               audio=self.f,
+                               frequency=self.freq,
+                               spectrum=self.log_Amp)
+        msg_ceps = SpectrumData(tm=self.t,
+                                audio=self.f,
+                                frequency=self.freq,
+                                spectrum=self.cepstrum)
         self.pub.publish(msg)
+        self.pub_log_amp.publish(msg_log)
+        self.pub_ceps.publish(msg_ceps)
 
 
 if __name__=='__main__':
