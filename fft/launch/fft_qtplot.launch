@@ -1,0 +1,9 @@
+<launch>
+  <node name="fft_qtplot"
+        pkg="fft" type="fft_qtplot.py"
+        if="$(arg qtplot)">
+    <remap from="~spectrum" to="/fft/output" />
+    <rosparam>
+    </rosparam>
+  </node>
+</launch>
